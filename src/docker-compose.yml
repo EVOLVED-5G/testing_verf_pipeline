@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+  redis_db:
+    image: redis:latest
+    container_name: redis_db
+    networks:
+      - demo-network
+  python_app:
+    image: python_app
+    container_name: python_app
+    networks:
+      - demo-network
+    hostname: dummy
+    build:
+      context: ./network_app_example
+    volumes:
+      - ./network_app_example:/usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      - redis_db
+    extra_hosts:
+      - host.docker.internal:host-gateway
+      - capifcore:host-gateway
+  nef_callback_server:
+    image: nef_callback_server
+    container_name: nef_callback_server
+    build:
+      context: ./nef_callback_server
+    networks:
+      - demo-network
+    ports:
+      - 8085:8080
+    volumes:
+      - ./nef_callback_server:/usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      - redis_db
+    extra_hosts:
+      - host.docker.internal:host-gateway
+  capif_callback_server:
+    image: capif_callback_server
+    container_name: capif_callback_server
+    build:
+      context: ./capif_callback_server
+    networks:
+      - demo-network
+    ports:
+      - 8086:8080
+    volumes:
+      - ./capif_callback_server:/usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      - redis_db
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+networks:
+  demo-network:
+    external: true
